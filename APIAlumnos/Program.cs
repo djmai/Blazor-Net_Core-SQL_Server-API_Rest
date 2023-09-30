@@ -80,6 +80,7 @@ try
 	// Registra la interfaz e implementación del repositorio
 	builder.Services.AddScoped<IRepositorioAlumnos, RepositorioAlumnos>();
 	builder.Services.AddScoped<IRepositorioCursos, RepositorioCursos>();
+	builder.Services.AddScoped<IRepositorioUsuarios, RepositorioUsuarios>();
 
 	// Configuracion de conexión para MSSQL
 	var cadenaConexionSqlConfiguracion = new AccesoDatos(builder.Configuration.GetConnectionString("SQL")!);

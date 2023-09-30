@@ -1,6 +1,9 @@
 ﻿using APIAlumnos.Datos;
+using APIAlumnos.Repositorio;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
 using ModeloClasesAlumnos;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,22 +14,24 @@ namespace APIAlumnos.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LoginController : Controller
+	public class LoginController : ControllerBase
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<CursosController> _log;
+        private readonly IRepositorioUsuarios _usuariosRepositorio;
 
-        public LoginController(IConfiguration configuration, ILogger<CursosController> logger)
+		public LoginController(IConfiguration configuration, ILogger<CursosController> logger, IRepositorioUsuarios usuariosRepositorio)
         {
             _configuration = configuration;
             _log = logger;
-        }
+            _usuariosRepositorio = usuariosRepositorio;
+		}
 
         [HttpPost]
         [AllowAnonymous]
         public async Task<ActionResult<UsuarioAPI>> Login(Login usuarioLogin)
         {
-            UsuarioAPI infoUsuario = null;
+            UsuarioAPI? infoUsuario = null;
 
             try
             {
@@ -103,6 +108,36 @@ namespace APIAlumnos.Controllers
             usuarioInfo.Token = new JwtSecurityTokenHandler().WriteToken( _token );
 
             return usuarioInfo;
+        }
+
+        [HttpPost]
+        [Route("CrearUsuario")]
+		[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+		public async Task<ActionResult<UsuarioLogin>> CrearUsuario(UsuarioLogin usuario)
+        {
+            UsuarioLogin resultado = new UsuarioLogin();
+            try
+            {
+                if (usuario == null)
+                    return BadRequest();
+
+                resultado = await _usuariosRepositorio.AltaUsuario(usuario);
+            }
+            catch(SqlException ex)
+            {
+                resultado.error = new Error();
+                _log.LogError("Se produjo un error en el controlador de alumnos en el método CrearUsuario:" + ex.ToString());
+                resultado.error.mensaje = "Error dando de alta nuevo usuario" + ex.Message;
+                resultado.error.mostrarUsuario = true;
+            }
+            catch (Exception ex)
+            {
+				resultado.error = new Error();
+				_log.LogError("Se produjo un error en el controlador de alumnos en el método CrearUsuario:" + ex.ToString());
+				resultado.error.mensaje = ex.ToString();
+				resultado.error.mostrarUsuario = false;
+			}
+            return resultado;
         }
     }
 }

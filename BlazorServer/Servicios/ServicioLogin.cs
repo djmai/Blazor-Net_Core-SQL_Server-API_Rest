@@ -1,5 +1,6 @@
 ﻿using BlazorServer.Pages;
 using ModeloClasesAlumnos;
+using System.Net.Http.Headers;
 
 namespace BlazorServer.Servicios
 {
@@ -14,10 +15,10 @@ namespace BlazorServer.Servicios
             _log = logger;
         }
 
-        public async Task<UsuarioAPI> SolicitudLogin(Login l)
+		public async Task<UsuarioAPI> SolicitudLogin(Login l)
         {
             var response = await _httpClient.PostAsJsonAsync("/api/Login", l);
-            UsuarioAPI u = await response.Content.ReadFromJsonAsync<UsuarioAPI>();
+            UsuarioAPI? u = await response.Content.ReadFromJsonAsync<UsuarioAPI>();
 
             if(u.error != null && u.error.mensaje != String.Empty)
             {
@@ -35,5 +36,29 @@ namespace BlazorServer.Servicios
 
             return u;
         }
+		public async Task<UsuarioLogin> CrearUsuario(UsuarioLogin usuarioLogin)
+		{
+            string token = Environment.GetEnvironmentVariable("Token");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+			var response = await _httpClient.PostAsJsonAsync<UsuarioLogin?>("api/Login/CrearUsuario", usuarioLogin);
+			UsuarioLogin? usuario = await response.Content.ReadFromJsonAsync<UsuarioLogin>();
+
+			if (usuario.error != null && usuario.error.mensaje != String.Empty)
+			{
+				if (usuario.error.mostrarUsuario)
+				{
+					_log.LogError("Error creando nuestro usuario: " + usuario.error.mensaje);
+					throw new Exception(usuario.error.mensaje);
+				}
+				else
+				{
+					_log.LogError("Error obteniendo alumnos: " + usuario.error.mensaje);
+					throw new Exception("Error obteniendo alumnos");
+				}
+			}
+
+            return usuario;
+		}
     }
 }

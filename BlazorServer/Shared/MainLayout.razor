@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@using Blazored.SessionStorage;
+@inject ISessionStorageService almacenarSesionServicio;
 
 <PageTitle>BlazorServer</PageTitle>
 
@@ -10,6 +12,7 @@
     <main>
         <div class="top-row px-4">
             @* <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a> *@
+            <b>Bienvenido, @emailUser</b>
         </div>
 
         <article class="content px-4">
@@ -17,3 +20,21 @@
         </article>
     </main>
 </div>
+
+@code {
+    String emailUser = String.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            emailUser = await almacenarSesionServicio.GetItemAsync<string>("email");
+        }
+        catch (Exception ex)
+        {
+            //textoError = ex.Message;
+            //MostrarError();
+            StateHasChanged();
+        }
+    }
+}

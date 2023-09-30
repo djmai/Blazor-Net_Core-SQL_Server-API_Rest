@@ -115,7 +115,7 @@
 		try
 		{
 			l.Usuario = Environment.GetEnvironmentVariable("UsuarioAPI");
-			l.Password = Environment.GetEnvironmentVariable("UsuarioAPI");
+			l.Password = Environment.GetEnvironmentVariable("PassAPI");
 			u = (await SevicioLogin.SolicitudLogin(l));
 			Environment.SetEnvironmentVariable("Token", u.Token);
 		}

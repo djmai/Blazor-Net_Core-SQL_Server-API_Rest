@@ -1,0 +1,63 @@
+﻿@page "/alumno/{id:int}/cursos"
+
+@using BlazorServer.Servicios;
+@using ModeloClasesAlumnos;
+@inject IServicioAlumnos ServicioAlumnos;
+@inject NavigationManager navigationManager;
+@attribute [Authorize]
+
+<h3>Listado de Cursos del Alumno (@alumno?.Nombre)</h3>
+
+<div class="form-group row">
+	<div class="col-sm-10">
+        <a href="alumno/@alumno?.Id/cursos/inscribir" class="btn btn-primary m-1">Inscribir alumno en curso</a>
+	</div>
+</div>
+
+@if(alumno == null){
+	<div class="spinner"></div>
+}else if(alumno.Listacursos == null){
+	<p class="text-center text-danger">Este alumno no esta inscrito en ningún curso</p>
+}else{
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Email</th>
+                <th scope="col">Nombre Curso</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Fecha Inicio</th>
+                <th scope="col">Fecha Termino</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Curso c in alumno.Listacursos)
+                @foreach (Precio p in c.ListaPrecios)
+            {
+                <tr>
+                    <td class="align-middle">@alumno.Nombre</td>
+                    <td class="align-middle">@alumno.Email</td>
+                    <td class="align-middle">@c.NombreCurso</td>
+                    <td class="align-middle text-success">@p.Coste $</td>
+                    <td class="align-middle">@p.FechaInicio.ToString("dd/MM/yyyy")</td>
+                    <td class="align-middle">@p.FechaTermino.ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+	[Parameter]
+	public int id { get; set; }
+
+	private Alumno? alumno;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (id > 0)
+			alumno = await ServicioAlumnos.CursosInscritorAlumno(id);
+	}
+
+}

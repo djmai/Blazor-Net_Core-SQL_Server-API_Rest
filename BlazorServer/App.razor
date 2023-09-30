@@ -1,0 +1,12 @@
+﻿<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <h1 class="text-danger">Aqui no hay nada!!!!!!!</h1>
+            <p class="text-danger">Vaya a otra página de nuestra aplicación</p>
+        </LayoutView>
+    </NotFound>
+</Router>

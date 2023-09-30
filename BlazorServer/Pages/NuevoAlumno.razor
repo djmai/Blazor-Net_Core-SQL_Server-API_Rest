@@ -1,0 +1,139 @@
+﻿@page "/nuevoAlumno"
+@using BlazorServer.Servicios;
+@using ModeloClasesAlumnos;
+@attribute [Authorize]
+
+
+<EditForm Model="@alumno" OnValidSubmit="HandleValidSubmit">
+	<DataAnnotationsValidator />
+	<h3>Nuevo Alumno</h3>
+	<hr />
+	<ValidationSummary />
+	<div class="form-group row">
+		<label for="Nombre" class="col-sm-2 col-fom-label">
+			Nombre
+		</label>
+		<div class="col-sm-10">
+			<InputText id="Nombre" class="form-control" placeholder="Nombre del alumno" @bind-Value="alumno!.Nombre" />
+			<ValidationMessage For="@(() => alumno.Nombre)" />
+		</div>
+	</div>
+	<div class="form-group row">
+		<label for="Email" class="col-sm-2 col-fom-label">
+			Email
+		</label>
+		<div class="col-sm-10">
+			<InputText id="Email" class="form-control" placeholder="Email" @bind-Value="alumno.Email" />
+			<ValidationMessage For="@(() => alumno.Email)" />
+		</div>
+	</div>
+	<div class="form-group row">
+		<label for="Foto" class="col-sm-2 col-fom-label">
+			Foto
+		</label>
+		<div class="col-sm-10">
+			@*<InputText id="Foto" class="form-control" placeholder="Foto" @bind-Value="alumno.Foto" />*@
+			<InputFile OnChange="LoadFiles" @bind-Value="alumno.Foto" />
+			<ValidationMessage For="@(() => alumno.Foto)" />
+			<p>
+				@Message
+			</p>
+		</div>
+	</div>
+	<div class="row content">
+		<div class="col-md-1">
+			<input type="submit" class="btn btn-primary" value="Guardar" @onclick="Guardar" />
+		</div>
+		<div class="col-md-2">
+			<input type="button" class="btn btn-danger" value="Cancelar" @onclick="Cancelar" />
+		</div>
+	</div>
+</EditForm>
+
+@code {
+
+	[Inject]
+	public IServicioAlumnos? ServicioAlumnos { get; set; }
+
+	[Inject]
+	public NavigationManager? navigationManager { get; set; }
+
+	public Alumno? alumno = new Alumno();
+
+	private List<IBrowserFile>? loadedFiles = new();
+	private string[] permittedExtensions = { ".png", ".jpg", ".jpeg" };
+	private long maxFileSize = 512 * 1024 * 1024;
+	private int maxAllowedFiles = 1;
+	private string Message = "";
+	private string extension = "";
+	private bool bClearInputFile = false;
+
+	private void HandleValidSubmit()
+	{
+		Console.WriteLine("OnValidSubmit");
+	}
+
+	private async Task LoadFiles(InputFileChangeEventArgs e)
+	{
+		loadedFiles!.Clear();
+
+		foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+		{
+			try
+			{
+				extension = Path.GetExtension(file.Name).ToLowerInvariant();
+				if (permittedExtensions.Contains(extension))
+				{
+					loadedFiles.Add(file);
+					alumno!.Foto = file.Name;
+					Message = $"{loadedFiles.Count} archivo(s) seleccionado(s) (" + file.Size + ")";
+				}
+				else
+				{
+					loadedFiles.Clear();
+					Message = "Formato de archivo no permitido";
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new Exception($"File: {file.Name} Error: {ex.Message}");
+			}
+		}
+	}
+
+	protected async void Guardar()
+	{
+		alumno!.FechaAlta = DateTime.Now;
+		if (alumno.Nombre != null && alumno.Email != null && alumno.Foto != null)
+		{
+			if (loadedFiles != null)
+			{
+				foreach (var file in loadedFiles!)
+				{
+					string nombreFichero = Guid.NewGuid() + extension;
+					var pathFoto = Path.Combine("wwwroot", "images", nombreFichero);
+					await using FileStream fs = new(pathFoto, FileMode.Create);
+					try
+					{
+						await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+						alumno.Foto = "images/" + nombreFichero;
+
+						alumno = await ServicioAlumnos!.CrearAlumno(alumno);
+						navigationManager!.NavigateTo("/alumnos");
+					}
+					catch (Exception ex)
+					{
+						Message = ex.Message;
+						throw new Exception(ex.Message);
+					}
+				}
+			}
+		}
+	}
+
+	protected void Cancelar()
+	{
+		navigationManager!.NavigateTo("/alumnos");
+	}
+
+}

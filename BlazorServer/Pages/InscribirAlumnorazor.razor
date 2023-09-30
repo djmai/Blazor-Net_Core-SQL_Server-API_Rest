@@ -1,0 +1,89 @@
+﻿@page "/alumno/{id:int}/cursos/inscribir"
+
+@using BlazorServer.Servicios;
+@using ModeloClasesAlumnos;
+@inject IServicioAlumnos ServicioAlumnos
+@inject IServicioCursos ServicioCursos
+@inject NavigationManager navigationManager
+@attribute [Authorize]
+
+<PageTitle>Inscribir Alumno</PageTitle>
+
+<h3>Inscribir Alumno (@alumno!.Nombre)</h3>
+
+@if(listaCursos == null)
+{
+	<div class="spinner"></div>
+}
+else if (alumno!.FechaBaja != null)
+{
+	<p class="text-danger">Este alumno está de baja.</p>
+}
+else if (listaCursos.Count == 0)
+{
+	<p class="text-danger text-center">No hay cursos disponibles</p>
+}
+else
+{
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Nombre Curso</th>
+				<th>Coste</th>
+				<th>F. Inicio Precio</th>
+				<th>F. Termino Precio</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach(Curso c in listaCursos)
+			@foreach(Precio p in c.ListaPrecios)
+				{
+					<tr>
+						<td>@c.NombreCurso</td>
+						<td class="text-success fw-bold">@p.Coste</td>
+						<td>@p.FechaInicio.ToString("dd/MM/yyyy")</td>
+						<td>@p.FechaTermino.ToString("dd/MM/yyyy")</td>
+						@if(DateTime.Now >= p.FechaInicio && DateTime.Now < p.FechaTermino)
+						{
+							<td>
+								<input type="submit" class="btn btn-primary" value="Inscribir" @onclick="( () => Inscribir(c.Id, p.Id) )"/>
+							</td>
+						}
+					</tr>
+				}
+		</tbody>
+	</table>
+}
+
+@code {
+
+	[Parameter]
+	public int id { get; set; }
+
+	public List<Curso> listaCursos { get; set; } = new List<Curso>();
+
+	public Alumno alumno { get; set; } = new Alumno();
+
+	protected override async Task OnInitializedAsync()
+	{
+		alumno = await ServicioAlumnos!.DameAlumno(Convert.ToInt32(id));
+
+		listaCursos = (await ServicioCursos.DameCursos(id)).ToList();
+	}
+
+	protected async Task Inscribir(int idCurso, int idPrecio)
+	{
+		try
+		{
+			alumno = await ServicioAlumnos.CursosInscribirAlumno(alumno, idCurso, idPrecio);
+			navigationManager.NavigateTo($"/alumno/{id}/cursos");
+		}
+		catch(Exception ex)
+		{
+			throw new Exception(ex.Message);
+		}
+
+	}
+
+}

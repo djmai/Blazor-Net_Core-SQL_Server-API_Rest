@@ -1,0 +1,146 @@
+﻿@page "/cursos"
+
+@using BlazorServer.Servicios;
+@using ModeloClasesAlumnos;
+@inject IServicioCursos ServicioCursos;
+@inject NavigationManager navigationManager;
+@attribute [Authorize]
+
+<h3>Lista Cursos</h3>
+
+<div class="form-group row">
+    <div class="col-sm-10">
+        <a href="/nuevoCurso" class="btn btn-primary m-1">Nuevo Curso</a>
+    </div>
+</div>
+
+@if (listaCursos == null)
+{
+	<div class="spinner"></div>
+}
+else if (listaCursos.Count == 0)
+{
+	<p class="text-danger text-center">No hay cursos disponibles</p>
+}
+else
+{
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Nombre Curso</th>
+				<th>Coste</th>
+				<th>F. Inicio Precio</th>
+				<th>F. Termino Precio</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (Curso c in listaCursos)
+				@foreach (Precio p in c.ListaPrecios!)
+				{
+					<tr>
+						<td>@c.NombreCurso</td>
+						<td class="text-success fw-bold">@p.Coste $</td>
+						<td>@p.FechaInicio.ToString("dd/MM/yyyy")</td>
+						<td>@p.FechaTermino.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center align-middle">
+                            <div class="btn-group" role="group" aria-label="Basic example">
+								<a href="@($"/cursos/edit/{c.Id}/{p.Id}")" type="button" class="btn btn-primary"><span class="oi oi-pencil" aria-hidden="true"></span></a>
+                                @*<button @onclick="(() => Eliminar(c))" type="button" class="btn btn-danger"><span class="oi oi-trash" aria-hidden="true"></span></button>*@
+                                <button @onclick="(() => {MostrarPopUP = !MostrarPopUP; curso = c; })" type="button" class="btn btn-danger"><span class="oi oi-trash" aria-hidden="true"></span></button>
+                                @*<button class='btn @(p.FechaBaja == null ? "btn-danger" : "btn-success")'
+                                @onclick="@(e => { if(alumno.FechaBaja == null) Eliminar(alumno); else Activar(alumno);})">
+                                    <span class='oi @(alumno.FechaBaja == null ? "oi-trash" : "oi-check")' aria-hidden="true"></span>
+                                </button>*@
+                            </div>
+                        </td>
+					</tr>
+				}
+		</tbody>
+	</table>
+}
+
+<div class="modal" tabindex="-1" style='display:@(MostrarPopUP ? "block" : "none")' role="dialog">
+    <div class="modal-dialog ">
+        <div class="modal-content ">
+            <div class="modal-header bg-warning">
+                <h3 class="modal-title ">Dar de baja curso</h3>
+                @*<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CerrarPop"></button>*@
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="@( () => MostrarPopUP = !MostrarPopUP )"></button>
+            </div>
+            <div class="modal-body alert-danger">
+                <strong>Va dar de baja el curso @curso?.NombreCurso.<br />Si esta seguro continue.<br />Si no cierre esta ventana.</strong>
+                <br />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" @onclick="(() => DarDeBaja(curso!.Id))">
+                    Dar de baja
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" tabindex="-1" style='display:@(mostrarError ? "block" : "none")' role="dialog">
+    <div class="modal-dialog ">
+        <div class="modal-content ">
+            <div class="modal-header bg-info">
+                <h3 class="modal-title ">Error al realizar la operación</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="@( () => mostrarError = !mostrarError )"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h4>Ooops!</h4>
+                <p>@txtError</p>
+            </div>
+            <div class="modal-footer text-center">
+                <button type="button" class="btn btn-success" @onclick="(() => mostrarError = !mostrarError)">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    public List<Curso> listaCursos { get; set; } = new List<Curso>();
+    public bool MostrarPopUP = false;
+    public int idCursoBorrar = -1;
+    public Curso curso;
+
+    public bool mostrarError = false;
+    public string txtError = String.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            mostrarError = false;
+            listaCursos = (await ServicioCursos.DameCursos(-1)).ToList();
+        }
+        catch(Exception ex)
+        {
+            MostrarPopUP = false;
+            mostrarError = true;
+            txtError = ex.Message;
+            StateHasChanged();
+        }
+    }
+
+    protected async void DarDeBaja(int id)
+    {
+        try
+        {
+            await ServicioCursos.BorrarCurso(id);
+            MostrarPopUP = false;
+            navigationManager.NavigateTo("/cursos", true);
+        }
+        catch (Exception ex)
+        {
+            txtError = ex.Message;
+            MostrarPopUP = false;
+            mostrarError = true;
+            StateHasChanged();
+        }
+    }
+}

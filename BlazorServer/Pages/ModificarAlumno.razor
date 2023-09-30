@@ -1,0 +1,187 @@
+﻿@page "/alumno/edit/{id:int}"
+
+@using BlazorServer.Servicios;
+@using ModeloClasesAlumnos;
+@using System.Text.Json
+@inject IServicioAlumnos ServicioAlumnos;
+@inject NavigationManager navigationManager;
+@attribute [Authorize]
+
+<h3>Modificar Alumno</h3>
+<hr />
+@*@System.Text.Json.JsonSerializer.Serialize(alumno)*@
+
+<div class="row justify-content-center m-3">
+    <div class="col-sm-8">
+        <div class="card">
+            <div class="card-header">
+                <h1>@alumno?.Nombre</h1>
+            </div>
+            <div class="card-body text-center">
+                <img class="card-img-top" src="@alumno?.Foto" />
+            </div>
+        </div>
+        <EditForm Model="@alumno" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <h4 class="text-center @(alumno.FechaBaja == null ? "alert-success" : "alert-danger")">
+                @(alumno.FechaBaja == null ? "Activo" : $"Fecha de baja:{@alumno.FechaBaja}")
+            </h4>
+            <div class="form-group row">
+                <label for="Nombre" class="col-sm-2 col-form-label">
+                    Nombre
+                </label>
+                <div class="col-sm-10">
+                    <InputText id="Nombre" class="form-control" placeholder="Nombre del alumno"
+                    @bind-Value="alumno!.Nombre" />
+                    <ValidationMessage For="@(() => alumno.Nombre)" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="Email" class="col-sm-2 col-form-label">
+                    Email
+                </label>
+                <div class="col-sm-10">
+                    <InputText id="Email" class="form-control" placeholder="Email"
+                    @bind-Value="alumno.Email" />
+                    <ValidationMessage For="@(() => alumno.Email)" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="Foto" class="col-sm-2 col-form-label">
+                    Foto
+                </label>
+                <div class="col-sm-10">
+                    <InputFile OnChange="LoadFiles" @bind-Value="alumno.Foto" />
+                    <ValidationMessage For="@(() => alumno.Foto)" />
+                    <p class="text-danger">* Formatos de imagen permitidos @System.Text.Json.JsonSerializer.Serialize(permittedExtensions)</p>
+                    <p class="text-danger fw-bold">
+                        @Message
+                    </p>
+                </div>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="checkBaja" @bind="checkBaja" />
+                <label class='form-check-label fw-bold @(alumno.FechaBaja == null ? "text-danger" : "text-success")' for="flexCheckDefault">
+                    @(alumno.FechaBaja == null ? "Dar de Baja al Alumno" : "Reactivar Alumno")
+                </label>
+            </div>
+            <div class="row content">
+                <div class="col-md-2">
+                    <input type="submit" class="btn btn-primary" value="Guardar" @onclick="Guardar" />
+                </div>
+                <div class="col-md-2">
+                    <input type="button" value="Cancelar" class="btn btn-danger" @onclick="Cancelar" />
+                </div>
+            </div>
+
+
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    Alumno? alumno = new Alumno();
+
+    private List<IBrowserFile>? loadedFiles = null;
+    private string[] permittedExtensions = { ".png", ".jpg", ".jpeg" };
+    private long maxFileSize = 512 * 1024 * 1024;
+    //private long maxFileSize = 1024;
+    private int maxAllowedFiles = 1;
+    private string Message = "";
+    private string extension = "";
+    private bool bClearInputFile = false;
+
+    private MemoryStream? ms = null;
+
+    private bool checkBaja = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (id > 0)
+            alumno = await ServicioAlumnos.DameAlumno(id);
+    }
+
+    public void HandleValidSubmit()
+    {
+        Console.WriteLine("OnValidSubmit");
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        loadedFiles!.Clear();
+
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            try
+            {
+                extension = Path.GetExtension(file.Name).ToLowerInvariant();
+                if (permittedExtensions.Contains(extension))
+                {
+                    loadedFiles.Add(file);
+                    Message = $"{loadedFiles.Count} archivo(s) seleccionado(s) (" + file.Size + ")";
+                }
+                else
+                {
+                    loadedFiles.Clear();
+                    Message = "Formato de archivo no permitido";
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"File: {file.Name} Error: {ex.Message}");
+            }
+        }
+    }
+
+    protected async Task Guardar()
+    {
+        if (alumno?.Nombre != null && alumno.Email != null)
+        {
+            if (loadedFiles != null)
+            {
+                foreach(var file in loadedFiles!)
+                {
+                    string nombreFichero = Guid.NewGuid() + extension;
+                    var pathFoto = Path.Combine("wwwroot", "images", nombreFichero);
+                    await using FileStream fs = new(pathFoto, FileMode.Create);
+                    try
+                    {
+                        await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+
+                        if (File.Exists("wwwroot/" + alumno.Foto))
+                            File.Delete("wwwroot/" + alumno.Foto);
+
+                        alumno.Foto = "images/" + nombreFichero;
+
+                        if (checkBaja)
+                            alumno.FechaBaja = alumno.FechaBaja == null ? DateTime.Now : null;
+
+                        alumno = await ServicioAlumnos!.ModificarAlumno(id, alumno);
+                        navigationManager.NavigateTo("/alumnos");
+                    }catch(Exception ex)
+                    {
+                        Message = ex.Message;
+                        throw new Exception(ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                if (checkBaja)
+                    alumno.FechaBaja = alumno.FechaBaja == null ? DateTime.Now : null;
+
+                alumno = await ServicioAlumnos!.ModificarAlumno(id, alumno);
+                navigationManager.NavigateTo("/alumnos");
+            }                
+        }
+    }
+
+    protected void Cancelar()
+    {
+        navigationManager.NavigateTo("/alumnos");
+    }
+}

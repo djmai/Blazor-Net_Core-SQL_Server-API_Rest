@@ -1,0 +1,50 @@
+﻿@page "/"
+@page "/index"
+
+<PageTitle>Inicio</PageTitle>
+
+<div class="container">
+	<div class="row text-center">
+		<div class="col-sm-12">
+			<h1><b>MMMV</b></h1>
+			<h4>Miguel Martinez</h4>
+		</div>
+	</div>
+	<div class="row align-items-start">
+		@foreach (string video in videos)
+		{
+			<div class="col">
+				<div class="embed-responsive embed-responsive-16by9">
+					<iframe width="380" height="200" src="@video"
+							title="YouTube video player" frameborder="0"
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+							allowfullscreen></iframe>
+				</div>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+
+	public List<string> videos = new List<string>();
+
+	protected override Task OnInitializedAsync()
+	{
+		CargarVideos();
+		return base.OnInitializedAsync();
+	}
+
+	private void CargarVideos()
+	{
+		videos = new List<string>
+		{
+			"https://www.youtube.com/embed/tKxK76e6XOM?si=b5KPBvApmxGMFjPG",
+			"https://www.youtube.com/embed/tKxK76e6XOM?si=b5KPBvApmxGMFjPG",
+			"https://www.youtube.com/embed/tKxK76e6XOM?si=b5KPBvApmxGMFjPG",
+			"https://www.youtube.com/embed/tKxK76e6XOM?si=b5KPBvApmxGMFjPG",
+			"https://www.youtube.com/embed/tKxK76e6XOM?si=b5KPBvApmxGMFjPG",
+			"https://www.youtube.com/embed/tKxK76e6XOM?si=b5KPBvApmxGMFjPG",
+		};
+	}
+}

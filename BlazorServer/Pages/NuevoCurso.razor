@@ -1,0 +1,163 @@
+﻿@page "/NuevoCurso"
+@using BlazorServer.Servicios;
+@using ModeloClasesAlumnos;
+@inject IServicioCursos ServicioCursos;
+@inject NavigationManager navigationManager;
+@inject IServicioLogin SevicioLogin
+@attribute [Authorize]
+
+<h3>NuevoCurso</h3>
+<hr />
+<EditForm Model="@curso" OnInvalidSubmit="HandleValidSubmit">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<div class="form-group row">
+		<label for="NombreCurso" class="col-sm-2 col-fom-label">
+			Curso:
+		</label>
+		<div class="col-sm-10">
+			<InputText id="NombreCurso" class="form-control" placeholder="Nombre del curso" @bind-Value="curso.NombreCurso" />
+			<ValidationMessage For="@(() => curso.NombreCurso)" />
+		</div>
+	</div>
+</EditForm>
+<EditForm Model="@precio" OnInvalidSubmit="HandleValidSubmit">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<div class="form-group row">
+		<label for="Coste" class="col-sm-2 col-fom-label">
+			Precio:
+		</label>
+		<div class="col-sm-10">
+			<InputNumber id="Coste" ParsingErrorMessage="Debe introducir un coste" class="form-control" placeholder="Nombre del curso" @bind-Value="precio.Coste" />
+			<ValidationMessage For="@(() => precio.Coste)" />
+		</div>
+	</div>
+	<div class="form-group row">
+		<label for="FechaInicio" class="col-sm-2 col-fom-label">
+			Fecha inicio:
+		</label>
+		<div class="col-sm-10">
+			<InputDate id="FechaInicio" ParsingErrorMessage="Debe seleccionar una fecha" class="form-control" placeholder="" @bind-Value="precio.FechaInicio" />
+			<ValidationMessage For="@(() => precio.FechaInicio)" />
+		</div>
+	</div>
+	<div class="form-group row">
+		<label for="FechaTermino" class="col-sm-2 col-fom-label">
+			Fecha termino:
+		</label>
+		<div class="col-sm-10">
+			<InputDate id="FechaTermino" ParsingErrorMessage="Debe seleccionar una fecha" class="form-control" placeholder="" @bind-Value="precio.FechaTermino" />
+			<ValidationMessage For="@(() => precio.FechaTermino)" />
+		</div>
+	</div>
+</EditForm>
+
+<div class="row content">
+	<div class="col-md-1">
+		<input type="submit" class="btn btn-primary" value="Guardar" @onclick="Guardar"/>
+	</div>
+	<div class="col-md-2">
+		<input type="button" class="btn btn-danger" value="Cancelar" @onclick="Cancelar" />
+	</div>
+</div>
+
+@if (mostrarError)
+{
+    <div class="modal bg-secondary" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-confirm">
+            <div class="modal-content ">
+                <div class="modal-header justify-content-center bg-info">
+                    <div>
+                        <strong>Se produjo un error al realizar la operación.</strong>
+                    </div>
+                    <button type="button" class="close"
+                            @onclick="CerrarError">
+                        <i class="large material-icons">cancel</i>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <h4>Ooops!</h4>
+                    <p>@textoError</p>
+                    <button class="btn btn-success" @onclick="CerrarError" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+	Curso curso = new Curso();
+	Precio precio = new Precio();
+
+	Boolean mostrarError = false;
+	String textoError = String.Empty;
+	Login l = new Login();
+	UsuarioAPI u = new UsuarioAPI();
+
+	protected override void OnInitialized()
+	{
+		curso.NombreCurso = "Nuevo curso";
+		precio.Coste = 19.99;
+		precio.FechaInicio = DateTime.Now;
+		precio.FechaTermino = DateTime.Now.AddDays(3);
+	}
+
+	protected void HandleValidSubmit()
+	{
+		Console.WriteLine("OnValidSubmit");
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		try
+		{
+			l.Usuario = Environment.GetEnvironmentVariable("UsuarioAPI");
+			l.Password = Environment.GetEnvironmentVariable("UsuarioAPI");
+			u = (await SevicioLogin.SolicitudLogin(l));
+			Environment.SetEnvironmentVariable("Token", u.Token);
+		}
+		catch (Exception ex)
+		{
+			textoError = ex.Message;
+			MostrarError();
+			StateHasChanged();
+		}
+	}
+
+	protected async Task Guardar()
+	{
+		try
+		{
+			if(curso.NombreCurso != String.Empty && precio.Coste >= 0 && precio.FechaInicio != null && precio.FechaTermino != null)
+			{
+				curso.ListaPrecios = new List<Precio>();
+				curso.ListaPrecios.Add(precio);
+				await ServicioCursos.AltaCurso(curso);
+				navigationManager.NavigateTo("/cursos");
+			}
+		}
+		catch(Exception ex)
+		{
+			throw new Exception(ex.Message);
+		}
+	}
+
+	protected void Cancelar()
+	{
+		navigationManager.NavigateTo("/cursos");
+	}
+
+	protected void CerrarError()
+	{
+		mostrarError = false;
+	}
+
+	protected void MostrarError()
+	{
+		mostrarError = true;
+	}
+
+}

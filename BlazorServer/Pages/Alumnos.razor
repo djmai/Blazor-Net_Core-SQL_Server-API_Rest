@@ -1,0 +1,136 @@
+﻿@page "/alumnos"
+@inherits AlumnosBase
+
+@attribute [Authorize]
+
+<PageTitle>Lista Alumnos</PageTitle>
+
+<h3>Lista Alumnos</h3>
+
+<div class="form-group row">
+    <div class="col-sm-10">
+        <a href="/nuevoAlumno" class="btn btn-primary m-1">Nuevo Alumno</a>
+    </div>
+</div>
+
+@if (Alumnos == null)
+{
+    <div class="spinner"></div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Foto</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Estatus</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var alumno in Alumnos)
+            {
+                <tr>
+                    <th class="align-middle" scope="row">@alumno.Id</th>
+                    <td class="align-middle">
+                        <img src="@alumno.Foto" class="img-thumbnail" width="100px">
+                    </td>
+                    <td class="align-middle">@alumno.Nombre</td>
+                    <td class="align-middle">
+                        <span class='badge d-grid @(alumno.FechaBaja == null ? "bg-success" : "bg-danger")'>
+                            @(alumno.FechaBaja == null ? "Activo" : "Baja")
+                        </span>
+                    </td>
+                    <td class="text-center align-middle">
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <a href="@($"alumno/{alumno.Id}/cursos")" type="button" class="btn btn-primary"><span class="oi oi-list-rich" aria-hidden="true"></span></a>
+                            <a href="@($"alumno/{alumno.Id}")" type="button" class="btn btn-primary"><span class="oi oi-eye" aria-hidden="true"></span></a>
+                            <a href="@($"alumno/edit/{alumno.Id}")" type="button" class="btn btn-primary"><span class="oi oi-pencil" aria-hidden="true"></span></a>
+                            <button
+                                class='btn @(alumno.FechaBaja == null ? "btn-danger" : "btn-success")'
+                                @onclick="@(e => { if(alumno.FechaBaja == null) Eliminar(alumno); else Activar(alumno);})" >
+                                <span class='oi @(alumno.FechaBaja == null ? "oi-trash" : "oi-check")' aria-hidden="true"></span>
+                            </button>
+                            @*
+                                @if (alumno.FechaBaja == null)
+                            {
+                                <button class="btn btn-danger" type="button" @onclick="() => Eliminar(alumno)"><span class="oi oi-trash" aria-hidden="true"></span></button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-success" @onclick="() => Activar(alumno)"><span class="oi oi-check" aria-hidden="true"></span></button>
+                            }
+                            *@
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @*<div class="card-group">
+        @foreach (var alumno in Alumnos)
+        {
+            <div class="card m-3" style="min-width: 18rem; max-width: 20%; min-height: 18rem;">
+                <div class="card-header @((alumno.FechaBaja != null ? "bg-danger" : ""))">
+                    <h3 class="@(alumno.FechaBaja != null ? "text-white" : "")">@alumno.Nombre</h3>
+                </div>
+                <img src="@alumno.Foto" alt="@alumno.Nombre" class="card-img-top imageThumbnail" />
+                <div class="card-footer text-center @(alumno.FechaBaja != null ? "bg-danger" : "")">
+                    <a href="#" class="btn btn-primary m-1">Cursos</a>
+                    <a href="@($"alumno/{alumno.Id}")" class="btn btn-primary m-1"><span class="oi oi-eye" aria-hidden="true"></span> Ver</a>
+                    <a href="@($"alumno/edit/{alumno.Id}")" class="btn btn-primary m-1"><span class="oi oi-pencil" aria-hidden="true"></span> Editar</a>
+                    @if(alumno.FechaBaja == null)
+                    {
+                        <button class="btn btn-danger m-1" @onclick="() => Eliminar(alumno)"><span class="oi oi-trash" aria-hidden="true"></span> Borrar</button>
+                    }
+                </div>
+            </div>
+        }
+    </div>*@
+}
+
+<div class="modal" tabindex="-1" style='display:@(MostrarPopUP ? "block" : "none")' role="dialog">
+    <div class="modal-dialog ">
+        <div class="modal-content ">
+            <div class="modal-header bg-warning">
+                <h3 class="modal-title ">Baja alumno</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CerrarPop"></button>
+            </div>
+            <div class="modal-body alert-danger">
+                <strong>Va dar de baja al alumno @alumno?.Nombre.<br />Si esta seguro continue.<br />Si no cierre esta ventana.</strong>
+                <br />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" @onclick="(() => DarDeBaja(alumno!.Id))">
+                    Dar de baja
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (mostrarError)
+{
+    <div class="modal bg-secondary" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-confirm">
+            <div class="modal-content ">
+                <div class="modal-header justify-content-center bg-info">
+                    <div>
+                        <strong>Se produjo un error al realizar la operación.</strong>
+                    </div>
+                    <button type="button" class="close"
+                    @onclick="CerrarError">
+                        <i class="large material-icons">cancel</i>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <h4>Ooops!</h4>
+                    <p>@txtError</p>
+                    <button class="btn btn-success" @onclick="CerrarError" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

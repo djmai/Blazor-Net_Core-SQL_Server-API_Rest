@@ -4,7 +4,7 @@ namespace BlazorServer.Servicios
 {
 	public interface IServicioAlumnos
 	{
-		Task<IEnumerable<Alumno?>> DameAlumnos();
+		Task<IEnumerable<Alumno?>> DameAlumnos(int idPagina, int numRegistros);
 
         Task<Alumno?> DameAlumno(int id);
 

@@ -1,0 +1,80 @@
+﻿<nav aria-label="Page navitigation example" >
+	<ul class="pagination">
+		@foreach (var pagina in listaPaginas)
+		{
+			<li @onclick="@(() => CargarPaginaElegida(pagina))"
+				style="cursor: pointer;"
+				class="page-item @(pagina.Enabled ? null : "disabled") @(pagina.Activa ? "active" : null)">
+				<span class="page-link" href="#">@pagina.Literal</span>
+			</li>
+		}
+	</ul>
+</nav>
+
+
+@code {
+	[Parameter]
+	public int PaginaMostrada { get; set; } = 1;
+
+	[Parameter]
+	public int PaginasTotales { get; set; }
+
+	[Parameter]
+	public int NumPaginasMostradas { get; set; } = 2;
+
+	[Parameter]
+	public EventCallback<int> PaginaSeleccionada { get; set; }
+	List<PaginasAux> listaPaginas = new List<PaginasAux>();
+
+	protected override void OnParametersSet()
+	{
+		DamePaginas();
+	}
+
+	private async Task CargarPaginaElegida(PaginasAux pagina)
+	{
+		if (pagina.Pagina == PaginaMostrada)
+			return;
+
+		if (!pagina.Enabled)
+			return;
+
+		PaginaMostrada = pagina.Pagina;
+
+		DamePaginas();
+
+		await PaginaSeleccionada.InvokeAsync(pagina.Pagina);
+	}
+
+	private void DamePaginas()
+	{
+		listaPaginas = new List<PaginasAux>();
+		Boolean paginaAnteriorDisabled = false;
+		var paginaSiguienteEnabled = false;
+
+		var paginaAnterior = 1;
+		var paginaSiguiente = 1;
+
+		if (PaginaMostrada != 1)
+		{
+			paginaAnteriorDisabled = true;
+			paginaAnterior = PaginaMostrada - 1;
+		}
+
+		listaPaginas.Add(new PaginasAux(paginaAnterior, paginaAnteriorDisabled, "<<"));
+
+		for (int i = 1; i <= PaginasTotales; i++)
+			if (i >= PaginaMostrada - NumPaginasMostradas && i <= PaginaMostrada + NumPaginasMostradas)
+				listaPaginas.Add(new PaginasAux(i, true, i.ToString(), ( i == PaginaMostrada)));
+
+		if (PaginaMostrada != PaginasTotales)
+		{
+			paginaSiguienteEnabled = true;
+			paginaSiguiente = PaginaMostrada + 1;
+		}
+		else
+			paginaSiguiente = PaginasTotales;
+
+		listaPaginas.Add(new PaginasAux(paginaSiguiente, paginaSiguienteEnabled, ">>"));
+	}
+}

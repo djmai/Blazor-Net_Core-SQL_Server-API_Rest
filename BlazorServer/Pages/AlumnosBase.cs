@@ -29,6 +29,10 @@ namespace BlazorServer.Pages
         Login l = new Login();
         UsuarioAPI u = new UsuarioAPI();
 
+        public int paginaActual;
+        public int paginasTotales;
+        Paginacion paginacion = new Paginacion();
+
         protected override async Task OnInitializedAsync()
         {
             try
@@ -38,7 +42,12 @@ namespace BlazorServer.Pages
                 u = await ServicioLogin.SolicitudLogin(l);
                 Environment.SetEnvironmentVariable("Token", u.Token);
 
-                Alumnos = (await ServicioAlumnos.DameAlumnos()).ToList();
+                paginaActual = paginacion.pagina;
+
+                Alumnos = (await ServicioAlumnos.DameAlumnos(paginacion.pagina, paginacion.registros)).ToList();
+
+                if (Alumnos.ToList().Count > 0)
+                    paginasTotales = Alumnos.ToList().ElementAt(0).paginacion.totalPaginas;
 
             }catch (Exception ex)
             {
@@ -84,7 +93,16 @@ namespace BlazorServer.Pages
             navigationManager.NavigateTo("alumnos", true);
         }
 
-        /*protected override Task OnInitializedAsync()
+        public async Task PaginaSeleccionada(int pagina)
+        {
+			paginaActual = pagina;
+			Alumnos = (await ServicioAlumnos.DameAlumnos(paginaActual, paginacion.registros)).ToList();
+
+			if (Alumnos.ToList().Count > 0)
+				paginasTotales = Alumnos.ToList().ElementAt(0).paginacion.totalPaginas;
+		}
+
+		/*protected override Task OnInitializedAsync()
         {
             CargarAlumnos();
             return base.OnInitializedAsync();
@@ -146,5 +164,5 @@ namespace BlazorServer.Pages
             Alumnos = new List<Alumno> { alumno1, alumno2, alumno3 };
         }
         */
-    }
+	}
 }

@@ -29,5 +29,7 @@ namespace ModeloClasesAlumnos
 		public DateTime? FechaBaja { get; set; }
 
 		public Error? error { get; set; }
+
+		public Paginacion paginacion { get; set; }
 	}
 }

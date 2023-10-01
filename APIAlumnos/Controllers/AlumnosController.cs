@@ -24,7 +24,7 @@ namespace APIAlumnos.Controllers
             _log.LogDebug(1, "NLog injected into AlumnosController");
         }
 
-		[HttpGet]
+		[HttpGet("{idPagina}/{numRegistros}")]
 		[Produces("application/json")]
 		[SwaggerOperation("Listado de alumnos")]
 		[SwaggerResponse(200, "Retorna lista de alumnos", typeof(Alumno[]))]
@@ -45,11 +45,11 @@ namespace APIAlumnos.Controllers
 
 			return Ok(responseApi);
         }*/
-		public async Task<ActionResult> DameAlumnos()
+		public async Task<ActionResult> DameAlumnos(int idPagina, int numRegistros)
 		{
 			try
 			{
-				return Ok(await alumnosRepositorio.DameAlumnos());
+				return Ok(await alumnosRepositorio.DameAlumnos(idPagina, numRegistros));
 			}
 			catch (Exception ex)
 			{

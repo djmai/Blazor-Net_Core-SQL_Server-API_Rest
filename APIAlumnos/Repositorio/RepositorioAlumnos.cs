@@ -187,7 +187,7 @@ namespace APIAlumnos.Repositorio
 
 		}
 
-		public async Task<IEnumerable<Alumno>> DameAlumnos()
+		public async Task<IEnumerable<Alumno>> DameAlumnos(int idPagina, int numRegistros)
         {
             List<Alumno> lista = new List<Alumno>();
             SqlConnection sqlConexion = conexion();
@@ -199,7 +199,9 @@ namespace APIAlumnos.Repositorio
                 Comm = sqlConexion.CreateCommand();
                 Comm.CommandText = "dbo.UsuarioDameAlumnos";
                 Comm.CommandType = System.Data.CommandType.StoredProcedure;
-                reader = await Comm.ExecuteReaderAsync();
+				Comm.Parameters.Add("@numpagina", SqlDbType.Int).Value = idPagina;
+				Comm.Parameters.Add("@numregistros", SqlDbType.Int).Value = numRegistros;
+				reader = await Comm.ExecuteReaderAsync();
                 while (reader.Read())
                 {
                     Alumno alu = new Alumno();
@@ -211,6 +213,9 @@ namespace APIAlumnos.Repositorio
 
                     if (reader["FechaBaja"] != System.DBNull.Value)
                         alu.FechaBaja = Convert.ToDateTime(reader["FechaBaja"].ToString());
+
+					alu.paginacion = new Paginacion();
+					alu.paginacion.totalPaginas = Convert.ToInt32(reader["totalPaginas"]);
 
                     lista.Add(alu);
                 }

@@ -1,6 +1,5 @@
 ﻿@page "/alumnos"
 @inherits AlumnosBase
-
 @attribute [Authorize]
 
 <PageTitle>Lista Alumnos</PageTitle>
@@ -13,12 +12,15 @@
     </div>
 </div>
 
+
 @if (Alumnos == null)
 {
     <div class="spinner"></div>
 }
 else
 {
+    <Paginacion PaginaMostrada="paginaActual" PaginasTotales="paginasTotales" PaginaSeleccionada="PaginaSeleccionada"></Paginacion>
+
     <table class="table">
         <thead>
             <tr>

@@ -18,11 +18,11 @@ namespace BlazorServer.Servicios
 			_log = logger;
 		}
 
-		public async Task<IEnumerable<Alumno?>?> DameAlumnos()
+		public async Task<IEnumerable<Alumno?>?> DameAlumnos(int idPagina, int numRegistros)
 		{
             string token = Environment.GetEnvironmentVariable("Token");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            List<Alumno> alu = await _httpClient.GetFromJsonAsync<List<Alumno?>?>("api/Alumnos");
+            List<Alumno> alu = await _httpClient.GetFromJsonAsync<List<Alumno?>?>($"api/Alumnos/{idPagina.ToString()}/{numRegistros.ToString()}");
 
             if(alu != null && alu[0].error != null && alu[0].error.mensaje != String.Empty)
             {

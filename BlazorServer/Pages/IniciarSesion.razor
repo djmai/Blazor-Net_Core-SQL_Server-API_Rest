@@ -109,7 +109,7 @@
                 ((MiServicioAuthenticationStateProvider)AuthenticationStateProvider).UsuarioAutenticado(usuario.EmailLogin);
                 await almacenarSesion.SetItemAsync("email", usuario.EmailLogin);
 
-                navigationManager.NavigateTo("/alumnos");
+                navigationManager.NavigateTo("/");
 
             }
         }catch(Exception ex)

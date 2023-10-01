@@ -6,7 +6,7 @@ namespace APIAlumnos.Repositorio
 	{
 		Task<Alumno> AltaAlumno(Alumno Alumno);
 
-		Task<IEnumerable<Alumno>> DameAlumnos();
+		Task<IEnumerable<Alumno>> DameAlumnos(int idPagina, int numRegistros);
 
 		Task<Alumno> DameAlumno(int id);
 

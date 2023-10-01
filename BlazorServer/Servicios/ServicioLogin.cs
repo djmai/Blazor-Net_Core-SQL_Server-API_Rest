@@ -36,7 +36,8 @@ namespace BlazorServer.Servicios
 
             return u;
         }
-		public async Task<UsuarioLogin> CrearUsuario(UsuarioLogin usuarioLogin)
+		
+        public async Task<UsuarioLogin> CrearUsuario(UsuarioLogin usuarioLogin)
 		{
             string token = Environment.GetEnvironmentVariable("Token");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -53,12 +54,37 @@ namespace BlazorServer.Servicios
 				}
 				else
 				{
-					_log.LogError("Error obteniendo alumnos: " + usuario.error.mensaje);
-					throw new Exception("Error obteniendo alumnos");
+					_log.LogError("Error obteniendo usuario: " + usuario.error.mensaje);
+					throw new Exception("Error obteniendo usuario");
 				}
 			}
 
             return usuario;
 		}
+
+        public async Task<UsuarioLogin> ValidarUsuario(UsuarioLogin usuarioLogin)
+        {
+            string token = Environment.GetEnvironmentVariable("Token");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _httpClient.PostAsJsonAsync<UsuarioLogin?>("api/Login/ValidarUsuario", usuarioLogin);
+            UsuarioLogin? usuario = await response.Content.ReadFromJsonAsync<UsuarioLogin>();
+
+            if (usuario.error != null && usuario.error.mensaje != String.Empty)
+            {
+                if (usuario.error.mostrarUsuario)
+                {
+                    _log.LogError("Error validando usuario: " + usuario.error.mensaje);
+                    throw new Exception(usuario.error.mensaje);
+                }
+                else
+                {
+                    _log.LogError("Error validando usuario: " + usuario.error.mensaje);
+                    throw new Exception("Error obteniendo usuario");
+                }
+            }
+
+            return usuario;
+        }
     }
 }

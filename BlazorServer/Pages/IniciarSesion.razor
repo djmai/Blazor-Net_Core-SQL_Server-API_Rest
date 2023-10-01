@@ -1,10 +1,10 @@
 ﻿@page "/IniciarSesion"
 @using BlazorServer.Servicios;
 @using ModeloClasesAlumnos
-
 @inject AuthenticationStateProvider AuthenticationStateProvider;
 @inject Blazored.SessionStorage.ISessionStorageService almacenarSesion;
 @inject NavigationManager navigationManager;
+@inject IServicioLogin ServicioLogin;
 
 
 <EditForm Model="@usuario" OnValidSubmit="HandleValidSubmit">
@@ -41,23 +41,92 @@
     </div>
 </EditForm>
 
+@if (mostrarError)
+{
+    <div class="modal bg-secondary" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog modal-confirm">
+            <div class="modal-content ">
+                <div class="modal-header justify-content-center bg-info">
+                    <div>
+                        <strong>Se produjo un error al realizar la operación.</strong>
+                    </div>
+                    <button type="button" class="close"
+                    @onclick="CerrarError">
+                        <i class="large material-icons">cancel</i>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <h4>Ooops!</h4>
+                    <p>@textoError</p>
+                    <button class="btn btn-success" @onclick="CerrarError" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     UsuarioLogin usuario = new UsuarioLogin();
     public string LoginMensaje { get; set; }
+
+    public String textoError = String.Empty;
+    public Boolean mostrarError = false;
+
+    Login l = new Login();
+    UsuarioAPI u = new UsuarioAPI();
 
     public void HandleValidSubmit()
     {
         Console.WriteLine("OnValidSubmit");
     }
 
-    private async Task<bool> ValidarUsuario()
+    protected override async Task OnInitializedAsync()
     {
 
-        //Llamaremos a nuestra API para validar al usuario
-        ((MiServicioAuthenticationStateProvider)AuthenticationStateProvider).UsuarioAutenticado(usuario.EmailLogin);
-        await almacenarSesion.SetItemAsync("email", usuario.EmailLogin);
+        try
+        {
+            l.Usuario = Environment.GetEnvironmentVariable("UsuarioAPI");
+            l.Password = Environment.GetEnvironmentVariable("PassAPI");
+            u = (await ServicioLogin.SolicitudLogin(l));
+            Environment.SetEnvironmentVariable("Token", u.Token);
+        }
+        catch (Exception ex)
+        {
+            textoError = ex.Message;
+            MostrarError();
+            StateHasChanged();
+        }
+    }
 
-        navigationManager.NavigateTo("/");
-        return await Task.FromResult(true);
+    private async void ValidarUsuario()
+    {
+        try
+        {
+            if(usuario.EmailLogin != null && usuario.Password != null)
+            {
+                usuario = await ServicioLogin.ValidarUsuario(usuario);
+
+                ((MiServicioAuthenticationStateProvider)AuthenticationStateProvider).UsuarioAutenticado(usuario.EmailLogin);
+                await almacenarSesion.SetItemAsync("email", usuario.EmailLogin);
+
+                navigationManager.NavigateTo("/alumnos");
+
+            }
+        }catch(Exception ex)
+        {
+            textoError = ex.Message;
+            MostrarError();
+            StateHasChanged();
+        }
+    }
+
+    protected void CerrarError()
+    {
+        mostrarError = false;
+    }
+
+    protected void MostrarError()
+    {
+        mostrarError = true;
     }
 }

@@ -99,7 +99,7 @@ namespace APIAlumnos.Repositorio
 				Comm = sqlConexion.CreateCommand();
 				Comm.CommandText = "dbo.UsuarioDameUsuario";
 				Comm.CommandType = CommandType.StoredProcedure;
-				Comm.Parameters.Add("@email", SqlDbType.Int).Value = email;
+				Comm.Parameters.Add("@email", SqlDbType.VarChar, 500).Value = email;
 				reader = await Comm.ExecuteReaderAsync();
 
 				if (reader.Read())

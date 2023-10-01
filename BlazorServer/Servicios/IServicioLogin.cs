@@ -7,5 +7,7 @@ namespace BlazorServer.Servicios
         Task<UsuarioAPI> SolicitudLogin(Login l);
 
         Task<UsuarioLogin> CrearUsuario(UsuarioLogin usuario);
+
+        Task<UsuarioLogin> ValidarUsuario(UsuarioLogin usuario);
     }
 }

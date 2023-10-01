@@ -126,17 +126,50 @@ namespace APIAlumnos.Controllers
             catch(SqlException ex)
             {
                 resultado.error = new Error();
-                _log.LogError("Se produjo un error en el controlador de alumnos en el método CrearUsuario:" + ex.ToString());
+                _log.LogError("Se produjo un error en el controlador de login en el método CrearUsuario:" + ex.ToString());
                 resultado.error.mensaje = "Error dando de alta nuevo usuario" + ex.Message;
                 resultado.error.mostrarUsuario = true;
             }
             catch (Exception ex)
             {
 				resultado.error = new Error();
-				_log.LogError("Se produjo un error en el controlador de alumnos en el método CrearUsuario:" + ex.ToString());
+				_log.LogError("Se produjo un error en el controlador de login en el método CrearUsuario:" + ex.ToString());
 				resultado.error.mensaje = ex.ToString();
 				resultado.error.mostrarUsuario = false;
 			}
+            return resultado;
+        }
+
+        [HttpPost]
+        [Route("ValidarUsuario")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult<UsuarioLogin>> ValidarUsuario(UsuarioLogin usuario)
+        {
+            UsuarioLogin resultado = new UsuarioLogin();
+            try
+            {
+                if (usuario == null)
+                    return BadRequest();
+
+                resultado = await _usuariosRepositorio.DameUsuario(usuario.EmailLogin);
+
+                if (usuario.EmailLogin != resultado.EmailLogin || resultado.Password != usuario.Password)
+                    throw new Exception("Credenciales no validas");
+            }
+            catch (SqlException ex)
+            {
+                resultado.error = new Error();
+                _log.LogError("Se produjo un error en el controlador de login en el método ValidarUsuario:" + ex.ToString());
+                resultado.error.mensaje = "Error dando de alta nuevo usuario" + ex.Message;
+                resultado.error.mostrarUsuario = true;
+            }
+            catch (Exception ex)
+            {
+                resultado.error = new Error();
+                _log.LogError("Se produjo un error en el controlador de login en el método ValidarUsuario:" + ex.ToString());
+                resultado.error.mensaje = ex.ToString();
+                resultado.error.mostrarUsuario = false;
+            }
             return resultado;
         }
     }

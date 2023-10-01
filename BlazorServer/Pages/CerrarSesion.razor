@@ -1,0 +1,15 @@
+﻿@page "/CerrarSesion"
+
+@using ModeloClasesAlumnos
+@using BlazorServer.Servicios
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Blazored.SessionStorage.ISessionStorageService almacenarSesion
+@inject NavigationManager navigationManager
+
+@code {
+	protected override async Task OnInitializedAsync()
+	{
+		((MiServicioAuthenticationStateProvider)AuthenticationStateProvider).CerrarSesion();
+		navigationManager.NavigateTo("/IniciarSesion");
+	}
+}

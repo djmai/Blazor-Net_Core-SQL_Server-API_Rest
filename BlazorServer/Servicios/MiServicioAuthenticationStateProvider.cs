@@ -39,10 +39,20 @@ namespace BlazorServer.Servicios
             {
                 new Claim(ClaimTypes.Name, email)
             }, "apiauth_type");
-
+            
             var usuario = new ClaimsPrincipal(identity);
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(usuario)));
         }
+
+        public void CerrarSesion()
+        {
+            almacenarSesionServicio.RemoveItemAsync("email");
+            var identity = new ClaimsIdentity();
+            var usuario = new ClaimsPrincipal(identity);
+
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(usuario)));
+
+		}
              
     }
 }
